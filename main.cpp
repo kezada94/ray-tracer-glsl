@@ -11,7 +11,7 @@
 #include <GLFW/glfw3.h>
 #include "camera.hpp"
 
-int width = 400, height = 320;
+int width = 1920, height = 1080;
 GLFWwindow *window;
 GLFWmonitor *monitor;
 const GLFWvidmode *mode;
@@ -210,7 +210,7 @@ int main(int argc, char *argv[]) {
     glfwSwapInterval(1);
     glfwSetKeyCallback(window, key_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
-    //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     //glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 

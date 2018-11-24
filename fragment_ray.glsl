@@ -59,11 +59,11 @@ Material dielectric = Material(vec3(0),                0.0, 1.5, mat_dielectric)
 Material lambert    = Material(vec3(0.8, 0.8, 0.0),    0.0, 0.0, mat_lambert);
 
 Sphere world[] = Sphere[](
-  Sphere(vec3(1,0,-1), 0.5, gray_metal),
+  Sphere(vec3(1,0,-1), 0.5, gold_metal),
   Sphere(vec3(-1,0,-1), 0.5, lambert),
-  Sphere(vec3(0,0,1), 0.5, dielectric)
-  //Sphere(vec3(0,0,1), -0.45, dielectric),
-//  Sphere(vec3(0,-100.5,-1), 100, lambert)
+  Sphere(vec3(0,0,1), 0.5, dielectric),
+  Sphere(vec3(0,0,1), -0.45, dielectric),
+  Sphere(vec3(0,100.5,-1), 10, lambert)
 );
 
 /* returns a varying number between 0 and 1 */
@@ -214,7 +214,7 @@ bool plane_hit(Ray r, float t_min, float t_max, out HitRecord hit) {
   if (t < t_min || t > t_max) return false;
   hit.t = t;
   hit.p = point_at_parameter(r, t);
-  hit.mat = gray_metal;
+  hit.mat = lambert;
   hit.normal = vec3(0, 1, 0);
   return true;
 }
@@ -261,7 +261,8 @@ vec3 color(Ray r) {
     } else {
       /* background hit (light source) */
       vec3 unit_dir = normalize(r.direction);
-      float t = 0.8 * (unit_dir.y + 1.0);
+
+      float t = 0.8 * (unit_dir.z + 1.0);
       col = total_attenuation * ((1.0-t)*vec3(1.0,1.0,1.0)+t*vec3(0.5,0.7,1.0));
       break;
     }

@@ -1,7 +1,7 @@
 UNAME := $(shell uname)
 
 ifeq ($(UNAME), Linux)
-	LIBS = lGL lGLEW -lm -lglfw
+	LIBS = -lGL -lGLEW -lm -lglfw
 	FRAMEWORK = 
 	CFLAGS=-D LINUX
 endif
