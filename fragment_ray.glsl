@@ -277,11 +277,11 @@ void main() {
     vec3 realcol;
     vec3 col = vec3(0, 0, 0);
 
-    if (framecount > 1)
+    if (framecount > 1){
       realcol = texture(renderedTexture, texture_coordinates).xyz;
-    else 
+    } else { 
       realcol = vec3(0,0,0);
-    
+    }
     float u, v;
     Ray r;
     for (int s = 0; s < nsamples; s++) {
@@ -293,6 +293,7 @@ void main() {
     col /= (nsamples);
     col = vec3(sqrt(col.x),sqrt(col.y),sqrt(col.z));
     
-    realcol = realcol + (1/framecount)*(col - realcol);
+    realcol += (1.0/framecount)*(col - realcol);
+
     fragcolor = vec4(realcol, 1.0);
 }
