@@ -1,6 +1,9 @@
-#version 120
+#version 410
 
 #define M_PI 3.1415926535897932384626433832795
+
+uniform sampler2D renderedTexture;
+
 
 uniform vec2 window_size;
 uniform float random_seed;
@@ -11,6 +14,9 @@ uniform vec3 camera_lower_left_corner;
 uniform vec3 camera_horizontal;
 uniform vec3 camera_vertical;
 uniform float camera_lens_radius;
+
+uniform int k;
+uniform int nsamples;
 
 struct Ray {
   vec3 origin;
@@ -54,15 +60,15 @@ Material lambert    = Material(vec3(0.8, 0.8, 0.0),    0.0, 0.0, mat_lambert);
 
 Sphere world[] = Sphere[](
   Sphere(vec3(1,0,-1), 0.5, gray_metal),
-  Sphere(vec3(-1,0,-1), 0.5, gold_metal)
-//  Sphere(vec3(0,0,1), 0.5, dielectric),
+  Sphere(vec3(-1,0,-1), 0.5, lambert),
+  Sphere(vec3(0,0,1), 0.5, dielectric)
   //Sphere(vec3(0,0,1), -0.45, dielectric),
 //  Sphere(vec3(0,-100.5,-1), 100, lambert)
 );
 
 /* returns a varying number between 0 and 1 */
 float drand48(vec2 co) {
-  return 2 * fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453) - 1;
+  return 2 * fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453*random_seed) - 1;
 }
 
 vec3 random_in_unit_disk(vec2 co) {
@@ -166,7 +172,7 @@ bool dispatch_scatter(in Ray r, HitRecord hit, out vec3 attenuation, out Ray sca
 }
 
 Ray get_ray(float s, float t) {
-  vec3 rd = camera_lens_radius * random_in_unit_disk(vec2(s,t));
+  vec3 rd = vec3(camera_lens_radius, camera_lens_radius, camera_lens_radius); //  * random_in_unit_disk(vec2(s,t));
   vec3 offset = vec3(s * rd.x, t * rd.y, 0);
   return Ray(camera_origin + offset, camera_lower_left_corner + s * camera_horizontal + t * camera_vertical - camera_origin - offset);
 }
@@ -239,7 +245,7 @@ vec3 color(Ray r) {
   vec3 col = vec3(0, 0, 0); /* visible color */
   vec3 total_attenuation = vec3(1.0, 1.0, 1.0); /* reduction of light transmission */
 
-  for (int bounce = 0; bounce < 4; bounce++) {
+  for (int bounce = 0; bounce < k; bounce++) {
 
     if (world_hit(r, 0.001, 1.0 / 0.0, hit)) {
       /* create a new reflected ray */
@@ -255,27 +261,38 @@ vec3 color(Ray r) {
     } else {
       /* background hit (light source) */
       vec3 unit_dir = normalize(r.direction);
-      float t = 0.5 * (unit_dir.y + 1.0);
+      float t = 0.8 * (unit_dir.y + 1.0);
       col = total_attenuation * ((1.0-t)*vec3(1.0,1.0,1.0)+t*vec3(0.5,0.7,1.0));
       break;
     }
   }
   return col;
 }
+out vec4 fragcolor;
+in vec2 texture_coordinates;
+
+uniform int framecount;
 
 void main() {
-    vec3 col = vec3(0,0,0);
+    vec3 realcol;
+    vec3 col = vec3(0, 0, 0);
+
+    if (framecount > 1)
+      realcol = texture(renderedTexture, texture_coordinates).xyz;
+    else 
+      realcol = vec3(0,0,0);
+    
     float u, v;
     Ray r;
-    const int nsamples = 16;
     for (int s = 0; s < nsamples; s++) {
       u = (gl_FragCoord.x + drand48(col.xy + s)) / window_size.x;
       v = (gl_FragCoord.y + drand48(col.xz + s)) / window_size.y;
       r = get_ray(u, v);
       col += color(r);
     }
-    col /= nsamples;
+    col /= (nsamples);
     col = vec3(sqrt(col.x),sqrt(col.y),sqrt(col.z));
-
-    gl_FragColor = vec4(col, 1.0);
+    
+    realcol = realcol + (1/framecount)*(col - realcol);
+    fragcolor = vec4(realcol, 1.0);
 }
