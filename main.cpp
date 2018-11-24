@@ -73,7 +73,7 @@ void update_camera(struct camera *c) {
     glUniform3f(uniform_camera_vertical, cam.vertical.x, cam.vertical.y, cam.vertical.z);
     glUniform1f(uniform_camera_lens_radius, cam.lens_radius);
 
-	camMoved = true;
+    camMoved = true;
 }
 
 static void key_callback(GLFWwindow *window, int key /*glfw*/, int scancode, int action, int mods) {
@@ -99,12 +99,16 @@ static void key_callback(GLFWwindow *window, int key /*glfw*/, int scancode, int
         case GLFW_KEY_L:
             nsamples++;
     }
-	printf("Nsamples = %i, K = %i\n", nsamples, k);
+    printf("Nsamples = %i, K = %i\n", nsamples, k);
     update_camera(&cam);
 }
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
     glUseProgram(prog);
+#ifdef RETINA
     glViewport(0, 0, width * 2, height * 2);
+#else
+    glViewport(0, 0, width, height);
+#endif
     glUniform2f(uniform_window_size, width, height);
 }
 void info() {
@@ -189,7 +193,6 @@ int main(int argc, char *argv[]) {
     monitor = glfwGetPrimaryMonitor();
     mode = glfwGetVideoMode(monitor);
 
-    
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -278,7 +281,11 @@ int main(int argc, char *argv[]) {
     int uniform_k = glGetUniformLocation(prog, "k");
     int uniform_nsamples = glGetUniformLocation(prog, "nsamples");
 
-    glUniform2f(uniform_window_size, width *2, height *2);
+#ifdef RETINA
+    glUniform2f(uniform_window_size, width * 2, height * 2);
+#else
+    glUniform2f(uniform_window_size, width, height);
+#endif
     float _random_seed = (float)rand() / RAND_MAX;
     printf("Random seed: %f\n", _random_seed);
     glUniform1f(uniform_random_seed, _random_seed);
@@ -289,27 +296,17 @@ int main(int argc, char *argv[]) {
     gl_program_info_log(stderr, prog);
     gl_program_info_log(stderr, prog2);
 
-    /*GLuint fbo;
-    glGenFramebuffers(1, &fbo);
-
-    GLuint textureFBO;
-    glGenTextures(1, &textureFBO);
-    glBindTexture(GL_TEXTURE_2D, textureFBO);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureFBO, 0);
-    //glDrawBuffers(1, (GLenum*)GL_COLOR_ATTACHMENT0);
-*/
-	glUseProgram(prog);
+    glUseProgram(prog);
 
     GLuint vao = genVao();
-	generateFBO(width*2, height*2);
-	int framecount = 1;
+
+#ifdef RETINA
+    generateFBO(width * 2, height * 2);
+#else
+    generateFBO(width, height);
+#endif
+
+    int framecount = 1;
     float lastTime = glfwGetTime();
     while (!glfwWindowShouldClose(window)) {
         float _random_seed = (float)rand() / RAND_MAX;
@@ -319,39 +316,42 @@ int main(int argc, char *argv[]) {
         glUniform1i(uniform_k, k);
         glUniform1i(uniform_nsamples, nsamples);
 
-		if (camMoved){
-			framecount = 1;
-			camMoved = false;
-		}
-		glUniform1i(uniform_framecount, framecount);
+        if (camMoved) {
+            framecount = 1;
+            camMoved = false;
+        }
+        glUniform1i(uniform_framecount, framecount);
 
+#ifdef RETINA
         glViewport(0, 0, width * 2, height * 2);
+#else
+        glViewport(0, 0, width, height);
+#endif
 
-        // Render to FBO
         glBindFramebuffer(GL_FRAMEBUFFER, FBO);
 
         glUseProgram(prog);
-		glActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture_color);
         glUniform1i(glGetUniformLocation(prog, "renderedTexture"), 0);
 
-        glBindVertexArray(vao); /* fragment shader is not run unless there's vertices in OpenGL 2? */
+        glBindVertexArray(vao); 
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        
-		glClear(GL_COLOR_BUFFER_BIT);
+
+        glClear(GL_COLOR_BUFFER_BIT);
         glUseProgram(prog2);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture_color);
         glUniform1i(glGetUniformLocation(prog2, "renderedTexture"), 0);
 
-        glBindVertexArray(vao); /* fragment shader is not run unless there's vertices in OpenGL 2? */
+        glBindVertexArray(vao); 
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
         glfwSwapBuffers(window);
-		framecount++;
+        framecount++;
         glUseProgram(prog);
 
         glfwPollEvents();
@@ -448,18 +448,17 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
     }
 
     float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos;  // reversed since y-coordinates go from bottom to top
+    float yoffset = lastY - ypos; 
     lastX = xpos;
     lastY = ypos;
 
-    float sensitivity = 0.1f;  // change this value to your liking
+    float sensitivity = 0.1f;  
     xoffset *= sensitivity;
     yoffset *= sensitivity;
 
     yaw += xoffset;
     pitch += yoffset;
 
-    // make sure that when pitch is out of bounds, screen doesn't get flipped
     if (pitch > 89.0f)
         pitch = 89.0f;
     if (pitch < -89.0f)
