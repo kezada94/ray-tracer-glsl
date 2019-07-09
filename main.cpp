@@ -80,24 +80,33 @@ static void key_callback(GLFWwindow *window, int key /*glfw*/, int scancode, int
     switch (key) {
         case GLFW_KEY_ESCAPE:
             glfwSetWindowShouldClose(window, 1);
+            break;
         case GLFW_KEY_A:
             lookfrom -= glm::normalize(glm::cross(lookat, up)) * (float)delta;
+            break;
         case GLFW_KEY_D:
             lookfrom += glm::normalize(glm::cross(lookat, up)) * (float)delta;
+            break;
         case GLFW_KEY_S:
             lookfrom -= (float)delta * lookat;
+            break;
         case GLFW_KEY_W:
             lookfrom += (float)delta * lookat;
+            break;
         case GLFW_KEY_I:
             if (k > 0)
                 k--;
+            break;
         case GLFW_KEY_O:
             k++;
+            break;
         case GLFW_KEY_K:
             if (nsamples > 0)
                 nsamples--;
+            break;
         case GLFW_KEY_L:
             nsamples++;
+            break;
     }
     printf("Nsamples = %i, K = %i\n", nsamples, k);
     update_camera(&cam);

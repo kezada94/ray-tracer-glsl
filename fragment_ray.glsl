@@ -243,7 +243,7 @@ bool world_hit(Ray r, float t_min, float t_max, out HitRecord hit) {
 vec3 color(Ray r) {
   HitRecord hit;
   vec3 col = vec3(0, 0, 0); /* visible color */
-  vec3 total_attenuation = vec3(1.0, 1.0, 1.0); /* reduction of light transmission */
+  vec3 total_attenuation = vec3(0.5, 0.5, 0.5); /* reduction of light transmission */
 
   for (int bounce = 0; bounce < k; bounce++) {
 
